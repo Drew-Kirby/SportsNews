@@ -1,5 +1,6 @@
 import json
 import urllib.request
+import urllib.error
 
 league_names = {
     "nba": "NBA",
@@ -45,52 +46,66 @@ def build_url(sport, league, api_resource):
 def news(url):
     titles = []
 
-    with urllib.request.urlopen(url) as response:
-        if response.status == 200:
-            raw_data = response.read().decode('utf-8')
-            data = json.loads(raw_data)
+    try:
+        with urllib.request.urlopen(url) as response:
+            if response.status == 200:
+                raw_data = response.read().decode('utf-8')
+                data = json.loads(raw_data)
 
-            for article in data.get('articles', []):
-                title = article.get('headline', 'No Title Available')
+                for article in data.get('articles', []):
+                    title = article.get('headline', 'No Title Available')
 
-                titles.append(title)
+                    titles.append(title)
 
-                # author = article.get('byline', 'Unknown Author')
-                
-                # print(f"{title} ({author})")
-            return titles
-        else:
-            print(f"Failed to retrieve data. {response.status}")
-            return []
+                    # author = article.get('byline', 'Unknown Author')
+                    
+                    # print(f"{title} ({author})")
+                return titles
+            else:
+                print(f"Failed to retrieve data. {response.status}")
+                return []
+    except urllib.error.HTTPError as e:
+        print(f"HTTP Error: {e}")
+        return []
+    except urllib.error.URLError as e:
+        print(f"URL Error: {e}")
+        return []
 
 def scores(url):
     scoresList = []
 
-    with urllib.request.urlopen(url) as response:
-        if response.status == 200:
-            raw_data = response.read().decode('utf-8')
-            data = json.loads(raw_data)
+    try:
+        with urllib.request.urlopen(url) as response:
+            if response.status == 200:
+                raw_data = response.read().decode('utf-8')
+                data = json.loads(raw_data)
 
-            for event in data.get('events', []):
-                competitions = event.get('competitions', [])
-                if not competitions:
-                    continue
+                for event in data.get('events', []):
+                    competitions = event.get('competitions', [])
+                    if not competitions:
+                        continue
 
-                competitors = competitions[0].get('competitors', [])
-                if len(competitors) >= 2:
-                    team1 = competitors[0]['team'].get('abbreviation', 'Unknown')
-                    score1 = competitors[0].get('score', '0')
-                    
-                    team2 = competitors[1]['team'].get('abbreviation', 'Unknown')
-                    score2 = competitors[1].get('score', '0')
-                    
-                    scoresList.append(f"{team1} {score1} - {team2} {score2}")
-                else:
-                    print("No score data available for this event.")
-            return scoresList    
-        else:
-            print(f"Failed to retrieve data. {response.status}")
-            return []
+                    competitors = competitions[0].get('competitors', [])
+                    if len(competitors) >= 2:
+                        team1 = competitors[0]['team'].get('abbreviation', 'Unknown')
+                        score1 = competitors[0].get('score', '0')
+                        
+                        team2 = competitors[1]['team'].get('abbreviation', 'Unknown')
+                        score2 = competitors[1].get('score', '0')
+                        
+                        scoresList.append(f"{team1} {score1} - {team2} {score2}")
+                    else:
+                        print("No score data available for this event.")
+                return scoresList    
+            else:
+                print(f"Failed to retrieve data. {response.status}")
+                return []
+    except urllib.error.HTTPError as e:
+        print(f"HTTP Error: {e}")
+        return []
+    except urllib.error.URLError as e:
+        print(f"URL Error: {e}")
+        return []
 
 api_resource = resource_names.get(resource)
 url = build_url(sport, league, api_resource)
@@ -109,11 +124,6 @@ else:
     print(f"Invalid choice: '{resource}'. Please enter 'news' or 'scores'.")
 
 # NEXT STEPS:
-# 3. Add network error handling
-#    - wrap urllib.request.urlopen(url) in try/except
-#    - catch urllib.error.HTTPError and urllib.error.URLError
-#    - print a friendly message and return an empty list on failure
-#
 # 4. Separate input/selection from fetch logic
 #    - keep the CLI choice code separate from the URL builder and parser
 #    - later the same news(url)/scores(url) functions can be called from a sidebar UI
