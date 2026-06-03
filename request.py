@@ -1,37 +1,42 @@
 import json
 import urllib.request
 
-sport = input("Enter the sport (e.g., 'basketball', 'football', 'baseball'): ").strip().lower()
-if sport != "basketball" and sport != "football" and sport != "baseball":
-    print("Invalid sport. Please enter 'basketball', 'football', or 'baseball'.")
-    exit()
-
-league = input("Enter the league (e.g., 'nba', 'nfl', 'mlb'): ").strip().lower()
-if league != "nba" and league != "nfl" and league != "mlb":
-    print("Invalid league. Please enter 'nba', 'nfl', or 'mlb'.")
-    exit()
-
-resource = input("Enter the resource (e.g., 'news', 'scores'): ").strip().lower()
-if resource != "news" and resource != "scores":
-    print("Invalid resource. Please enter 'news' or 'scores'.")
-    exit()
-
 league_names = {
     "nba": "NBA",
     "nfl": "NFL",
     "mlb": "MLB",
 }
 
+valid_leagues = {
+    "basketball": ["nba"],
+    "football": ["nfl"],
+    "baseball": ["mlb"]
+}
+
+resource_names = {
+    "news": "news",
+    "scores": "scoreboard"
+}
+
+sport = input("Enter the sport (e.g., 'basketball', 'football', 'baseball'): ").strip().lower()
+if sport not in valid_leagues:
+    print("Invalid sport. Please enter 'basketball', 'football', or 'baseball'.")
+    exit()
+
+league = input("Enter the league (e.g., 'nba', 'nfl', 'mlb'): ").strip().lower()
+if league not in valid_leagues.get(sport, []):
+    print("Invalid league. Please enter 'nba', 'nfl', or 'mlb'.")
+    exit()
+
+resource = input("Enter the resource (e.g., 'news', 'scores'): ").strip().lower()
+if resource not in resource_names:
+    print("Invalid resource. Please enter 'news' or 'scores'.")
+    exit()
+
 def get_display_name(sport, league):
     fleague = league_names.get(league, league.upper())
     fsport = sport.capitalize()
     return f"{fleague}"
-
-def fix_score_name(resource):
-    if resource == "scores":
-        return "scoreboard"
-    else:
-        return resource
 
 def build_url(sport, league, api_resource):
     base_url = "https://site.api.espn.com/apis/site/v2/sports"
@@ -87,7 +92,7 @@ def scores(url):
             print(f"Failed to retrieve data. {response.status}")
             return []
 
-api_resource = fix_score_name(resource)
+api_resource = resource_names.get(resource)
 url = build_url(sport, league, api_resource)
 
 print(f"Fetching {get_display_name(sport, league)} {resource}...")
@@ -104,12 +109,6 @@ else:
     print(f"Invalid choice: '{resource}'. Please enter 'news' or 'scores'.")
 
 # NEXT STEPS:
-# 2. Use a small config object for valid input
-#    - replace the repeated if checks with a dict like:
-#      valid_leagues = {"basketball":["nba"], "football":["nfl"], "baseball":["mlb"]}
-#    - translate resource names using a map like:
-#      resource_map = {"news":"news", "scores":"scoreboard"}
-#
 # 3. Add network error handling
 #    - wrap urllib.request.urlopen(url) in try/except
 #    - catch urllib.error.HTTPError and urllib.error.URLError
