@@ -2,35 +2,20 @@ import json
 import urllib.request
 import urllib.error
 
-sport = None
-resource = None
-league = None
-
 league_names = {
-    "nba": "NBA",
-    "wnba": "WNBA",
-    "mens-college-basketball": "Men's College Basketball",
-    "womens-college-basketball": "Women's College Basketball",
-    "fiba": "FIBA",
-    "college-football": "College Football",
-    "mlb": "MLB",
-    "nhl": "NHL",
-    "mens-college-hockey": "Men's College Hockey",
-    "fifa.world": "FIFA World Cup",
-    "uefa.champions": "UEFA Champions League",
-    "fifa.wwc": "FIFA Women's World Cup",
-    "pga": "PGA Tour",
-    "liv": "LIV Golf",
-    "lpga": "LPGA Tour",
-    "champions-tour": "Champions Tour",
-    "f1": "F1",
-    "nascar-premier": "NASCAR Premier"
+    "nba": "NBA", "wnba": "WNBA", "mens-college-basketball": "Men's College Basketball",
+    "womens-college-basketball": "Women's College Basketball", "fiba": "FIBA",
+    "nfl": "NFL", "college-football": "College Football", "mlb": "MLB", "college-baseball": "College Baseball",
+    "college-softball": "College Softball", "nhl": "NHL", "mens-college-hockey": "Men's College Hockey",
+    "fifa.world": "FIFA World Cup", "uefa.champions": "UEFA Champions League", "fifa.wwc": "FIFA Women's World Cup",
+    "pga": "PGA Tour", "liv": "LIV Golf", "lpga": "LPGA Tour", "champions-tour": "Champions Tour",
+    "f1": "F1", "nascar-premier": "NASCAR Premier"
 }
 
 valid_leagues = {
     "basketball": ["nba", "wnba", "mens-college-basketball", "womens-college-basketball", "fiba"],
     "football": ["nfl", "college-football"],
-    "baseball": ["mlb", "college-baseball"],
+    "baseball": ["mlb", "college-baseball", "college-softball"],
     "hockey": ["nhl", "mens-college-hockey"], 
     "soccer": ["fifa.world", "uefa.champions", "fifa.wwc"], 
     "golf": ["pga", "lpga", "liv", "champions-tour"], 
@@ -43,28 +28,6 @@ resource_names = {
     "standings": "standings",
     "rankings": "rankings"
 }
-
-def get_user_choices():
-    sport = input("Enter the sport (e.g., 'basketball', 'football', 'baseball'): ").strip().lower()
-    if sport not in valid_leagues:
-        print("Invalid sport. Please enter a valid sport.")
-        exit()
-
-    league = input(f"Enter the league (e.g., {', '.join(valid_leagues.get(sport, []))}): ").strip().lower()
-    if league not in valid_leagues.get(sport, []):
-        print("Invalid league. Please enter a valid league for the selected sport.")
-        exit()
-
-    resource = input("Enter the resource (e.g., 'news', 'scores'): ").strip().lower()
-    if resource not in resource_names:
-        print("Invalid resource. Please enter a valid resource type.")
-        exit()
-    return(sport, league, resource)
-
-def get_display_name(sport, league):
-    fleague = league_names.get(league, league.upper())
-    fsport = sport.capitalize()
-    return f"{fleague}"
 
 def build_url(sport, league, api_resource):
     base_url = "https://site.api.espn.com/apis/site/v2/sports"
@@ -174,13 +137,13 @@ def standings(url):
                 return standingsByConference
             else:
                 print(f"Failed to retrieve data. {response.status}")
-                return []
+                return {}
     except urllib.error.HTTPError as e:
         print(f"HTTP Error: {e}")
-        return []
+        return {}
     except urllib.error.URLError as e:
         print(f"URL Error: {e}")
-        return []
+        return {}
     
 def rankings(url):
     top25 = []
@@ -213,39 +176,62 @@ def rankings(url):
     except urllib.error.URLError as e:
         print(f"URL Error: {e}")
         return []
+
+def get_user_choices():
+    sport = input("Enter the sport (e.g., 'basketball', 'football', 'baseball'): ").strip().lower()
+    if sport not in valid_leagues:
+        print("Invalid sport. Please enter a valid sport.")
+        exit()
+
+    league = input(f"Enter the league (e.g., {', '.join(valid_leagues.get(sport, []))}): ").strip().lower()
+    if league not in valid_leagues.get(sport, []):
+        print("Invalid league. Please enter a valid league for the selected sport.")
+        exit()
+
+    resource = input("Enter the resource (e.g., 'news', 'scores'): ").strip().lower()
+    if resource not in resource_names:
+        print("Invalid resource. Please enter a valid resource type.")
+        exit()
+    return(sport, league, resource)
+
+def get_display_name(sport, league):
+    fleague = league_names.get(league, league.upper())
+    fsport = sport.capitalize()
+    return f"{fleague}"
     
 def explore_api(url):
     with urllib.request.urlopen(url) as response:
         data = json.loads(response.read().decode('utf-8'))
         print(json.dumps(data, indent=2))  # Pretty-print it
 
-sport, league, resource = get_user_choices()
+if __name__ == "__main__":
+    sport, league, resource = get_user_choices()
 
-api_resource = resource_names.get(resource)
-url = build_url(sport, league, api_resource)
-#explore_api(url)
+    api_resource = resource_names.get(resource)
+    url = build_url(sport, league, api_resource)
+    #explore_api(url)
 
-print(f"Fetching {get_display_name(sport, league)} {resource}...")
+    print(f"Fetching {get_display_name(sport, league)} {resource}...")
 
-if api_resource == "news":
-    items = news(url)
-    for item in items:
-        print(item)
-elif api_resource == "scoreboard":
-    items = scores(url)
-    for item in items:
-        print(item)
-elif api_resource == "standings":
-    items=standings(url)
-    for conference, teams in items.items():
-        print(conference)
-        sorted_teams = sorted(teams, key=lambda x: int(x.split(": ")[1].split("-")[0]), reverse=True)
-        for team in sorted_teams:
-            print(team)
-        
-elif api_resource == "rankings":
-    items = rankings(url)
-    for item in items:
-        print(item)
-else:
-    print(f"Invalid choice: '{resource}'. Please enter a valid resource type.")
+    if api_resource == "news":
+        items = news(url)
+        for item in items:
+            print(item)
+    elif api_resource == "scoreboard":
+        items = scores(url)
+        for item in items:
+            print(item)
+    elif api_resource == "standings":
+        items=standings(url)
+        for conference, teams in items.items():
+            print(conference)
+            sorted_teams = sorted(teams, key=lambda x: int(x.split(": ")[1].split("-")[0]), reverse=True)
+            for team in sorted_teams:
+                print(team)
+            
+    elif api_resource == "rankings":
+        items = rankings(url)
+        for item in items:
+            print(item)
+    else:
+        print(f"Invalid choice: '{resource}'. Please enter a valid resource type.")
