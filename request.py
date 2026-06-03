@@ -38,6 +38,8 @@ def build_url(sport, league, api_resource):
     return f"{base_url}/{sport}/{league}/{api_resource}"
 
 def news(url):
+    titles = []
+
     with urllib.request.urlopen(url) as response:
         if response.status == 200:
             raw_data = response.read().decode('utf-8')
@@ -46,18 +48,19 @@ def news(url):
             for article in data.get('articles', []):
                 title = article.get('headline', 'No Title Available')
 
-                title
+                titles.append(title)
 
                 # author = article.get('byline', 'Unknown Author')
                 
                 # print(f"{title} ({author})")
-                print(title)
-                return title
+            return titles
         else:
             print(f"Failed to retrieve data. {response.status}")
-    
+            return []
 
 def scores(url):
+    scoresList = []
+
     with urllib.request.urlopen(url) as response:
         if response.status == 200:
             raw_data = response.read().decode('utf-8')
@@ -76,34 +79,31 @@ def scores(url):
                     team2 = competitors[1]['team'].get('abbreviation', 'Unknown')
                     score2 = competitors[1].get('score', '0')
                     
-                    print(f"{team1} {score1} - {team2} {score2}")
+                    scoresList.append(f"{team1} {score1} - {team2} {score2}")
                 else:
                     print("No score data available for this event.")
+            return scoresList    
         else:
             print(f"Failed to retrieve data. {response.status}")
+            return []
 
 api_resource = fix_score_name(resource)
 url = build_url(sport, league, api_resource)
 
 print(f"Fetching {get_display_name(sport, league)} {resource}...")
 
-items = news(url)
-for item in items:
-    print(item)
-
 if api_resource == "news":
-    news(url)
+    items = news(url)
+    for item in items:
+        print(item)
 elif api_resource == "scoreboard":
-    scores(url)
+    items = scores(url)
+    for item in items:
+        print(item)
 else:
     print(f"Invalid choice: '{resource}'. Please enter 'news' or 'scores'.")
 
 # NEXT STEPS:
-# 1. Return structured data from fetch functions
-#    - change news(url) so it collects titles into a list and returns that list
-#    - change scores(url) so it collects score items and returns them instead of printing directly
-#    - this makes the functions reusable for a sidebar UI later
-#
 # 2. Use a small config object for valid input
 #    - replace the repeated if checks with a dict like:
 #      valid_leagues = {"basketball":["nba"], "football":["nfl"], "baseball":["mlb"]}
